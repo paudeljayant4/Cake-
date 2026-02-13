@@ -2,14 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>3D Red Velvet For You ❤️</title>
+<title>For Himani ❤️</title>
 <style>
-body {
-  margin: 0;
-  overflow: hidden;
-  background: radial-gradient(circle at center, #2b0000, #0c0000 80%);
-}
-canvas { display: block; }
+body { margin:0; overflow:hidden; background:#120000; }
+canvas { display:block; }
 </style>
 </head>
 <body>
@@ -18,136 +14,211 @@ canvas { display: block; }
 
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160/build/three.module.js";
 import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.160/examples/jsm/controls/OrbitControls.js";
+import { EffectComposer } from "https://cdn.jsdelivr.net/npm/three@0.160/examples/jsm/postprocessing/EffectComposer.js";
+import { RenderPass } from "https://cdn.jsdelivr.net/npm/three@0.160/examples/jsm/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "https://cdn.jsdelivr.net/npm/three@0.160/examples/jsm/postprocessing/UnrealBloomPass.js";
+import { FontLoader } from "https://cdn.jsdelivr.net/npm/three@0.160/examples/jsm/loaders/FontLoader.js";
+import { TextGeometry } from "https://cdn.jsdelivr.net/npm/three@0.160/examples/jsm/geometries/TextGeometry.js";
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0x1a0000, 10, 40);
+scene.fog = new THREE.Fog(0x120000, 10, 40);
 
-const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 100);
-camera.position.set(0, 4, 10);
+const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 100);
+camera.position.set(0,6,12);
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
 document.body.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.enablePan = false;
-controls.minDistance = 6;
-controls.maxDistance = 15;
 
-/* Lighting */
+/* Composer + Bloom */
 
-const ambient = new THREE.AmbientLight(0xffcccc, 0.4);
-scene.add(ambient);
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
 
-const spotlight = new THREE.SpotLight(0xff8888, 2);
-spotlight.position.set(5, 10, 5);
-spotlight.castShadow = true;
-scene.add(spotlight);
+const bloomPass = new UnrealBloomPass(
+  new THREE.Vector2(innerWidth, innerHeight),
+  1.5,
+  0.4,
+  0.85
+);
+composer.addPass(bloomPass);
+
+/* Lights */
+
+scene.add(new THREE.AmbientLight(0xffcccc, 0.3));
+
+const spot = new THREE.SpotLight(0xff8888, 3);
+spot.position.set(5,15,5);
+spot.castShadow = true;
+scene.add(spot);
 
 /* Plate */
 
-const plateGeo = new THREE.CylinderGeometry(4.5, 4.5, 0.5, 64);
-const plateMat = new THREE.MeshStandardMaterial({
-  color: 0xeeeeee,
-  roughness: 0.3,
-  metalness: 0.2
-});
-const plate = new THREE.Mesh(plateGeo, plateMat);
+const plate = new THREE.Mesh(
+  new THREE.CylinderGeometry(4.5,4.5,0.5,64),
+  new THREE.MeshStandardMaterial({ color:0xeeeeee, roughness:0.3 })
+);
 plate.receiveShadow = true;
 scene.add(plate);
 
-/* Cake Bottom */
+/* Cake Layers */
 
-const cakeGeo1 = new THREE.CylinderGeometry(3, 3, 1.5, 64);
-const velvetMat = new THREE.MeshStandardMaterial({
-  color: 0x5c0000,
-  roughness: 0.8
-});
-const cake1 = new THREE.Mesh(cakeGeo1, velvetMat);
-cake1.position.y = 1;
-cake1.castShadow = true;
-scene.add(cake1);
+const velvetMat = new THREE.MeshStandardMaterial({ color:0x5c0000, roughness:0.9 });
 
-/* Cream Layer */
+function addLayer(radius,height,y){
+  const layer = new THREE.Mesh(
+    new THREE.CylinderGeometry(radius,radius,height,64),
+    velvetMat
+  );
+  layer.position.y = y;
+  layer.castShadow = true;
+  scene.add(layer);
+}
 
-const creamGeo = new THREE.CylinderGeometry(3.05, 3.05, 0.4, 64);
-const creamMat = new THREE.MeshStandardMaterial({
-  color: 0xfff0f5,
-  roughness: 0.3
-});
-const cream = new THREE.Mesh(creamGeo, creamMat);
+addLayer(3,1.5,1);
+addLayer(2.8,1.2,3);
+
+const cream = new THREE.Mesh(
+  new THREE.CylinderGeometry(3.05,3.05,0.4,64),
+  new THREE.MeshStandardMaterial({ color:0xfff0f5, roughness:0.3 })
+);
 cream.position.y = 2;
-cream.castShadow = true;
 scene.add(cream);
-
-/* Top Layer */
-
-const cakeGeo2 = new THREE.CylinderGeometry(2.8, 2.8, 1.2, 64);
-const cake2 = new THREE.Mesh(cakeGeo2, velvetMat);
-cake2.position.y = 3;
-cake2.castShadow = true;
-scene.add(cake2);
 
 /* Frosting Top */
 
-const frostingGeo = new THREE.CylinderGeometry(2.9, 2.9, 0.5, 64);
-const frosting = new THREE.Mesh(frostingGeo, creamMat);
+const frostingMat = new THREE.MeshStandardMaterial({
+  color:0xfff0f5,
+  roughness:0.2,
+  emissive:0xffddee,
+  emissiveIntensity:0.2
+});
+
+const frosting = new THREE.Mesh(
+  new THREE.CylinderGeometry(2.9,2.9,0.5,64),
+  frostingMat
+);
 frosting.position.y = 3.9;
-frosting.castShadow = true;
 scene.add(frosting);
 
 /* Candle */
 
-const candleGeo = new THREE.CylinderGeometry(0.15, 0.15, 1.5, 32);
-const candleMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-const candle = new THREE.Mesh(candleGeo, candleMat);
+const candle = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.15,0.15,1.5,32),
+  new THREE.MeshStandardMaterial({ color:0xffffff })
+);
 candle.position.y = 5;
-candle.castShadow = true;
 scene.add(candle);
 
 /* Flame */
 
-const flameGeo = new THREE.SphereGeometry(0.25, 32, 32);
-const flameMat = new THREE.MeshBasicMaterial({
-  color: 0xffaa00
-});
-const flame = new THREE.Mesh(flameGeo, flameMat);
+let flameAlive = true;
+
+const flame = new THREE.Mesh(
+  new THREE.SphereGeometry(0.25,32,32),
+  new THREE.MeshBasicMaterial({ color:0xffaa00 })
+);
 flame.position.y = 6;
 scene.add(flame);
 
-/* Glow Light from Flame */
-
-const flameLight = new THREE.PointLight(0xffaa33, 2, 5);
+const flameLight = new THREE.PointLight(0xffaa33,3,6);
 flameLight.position.y = 6;
 scene.add(flameLight);
 
-/* Floating Animation */
+/* Click to Blow */
 
-function animate() {
+window.addEventListener("click", ()=>{
+  if(!flameAlive) return;
+  flameAlive = false;
+  scene.remove(flame);
+  scene.remove(flameLight);
+});
+
+/* 3D Text Himani */
+
+const loader = new FontLoader();
+loader.load("https://threejs.org/examples/fonts/helvetiker_regular.typeface.json", font=>{
+  const textGeo = new TextGeometry("Himani",{
+    font:font,
+    size:0.6,
+    height:0.2,
+    curveSegments:12,
+    bevelEnabled:true,
+    bevelThickness:0.05,
+    bevelSize:0.03
+  });
+
+  textGeo.center();
+
+  const textMat = new THREE.MeshStandardMaterial({
+    color:0xffffff,
+    roughness:0.2,
+    emissive:0xffe6f0,
+    emissiveIntensity:0.4
+  });
+
+  const textMesh = new THREE.Mesh(textGeo,textMat);
+  textMesh.position.y = 4.3;
+  scene.add(textMesh);
+});
+
+/* Falling Rose Petals */
+
+const petals = [];
+
+for(let i=0;i<40;i++){
+  const petal = new THREE.Mesh(
+    new THREE.SphereGeometry(0.15,8,8),
+    new THREE.MeshStandardMaterial({ color:0xff0033 })
+  );
+  petal.position.set(
+    (Math.random()-0.5)*10,
+    Math.random()*10+5,
+    (Math.random()-0.5)*10
+  );
+  petals.push(petal);
+  scene.add(petal);
+}
+
+/* Animation */
+
+function animate(){
   requestAnimationFrame(animate);
 
-  cake1.rotation.y += 0.002;
-  cake2.rotation.y += 0.002;
-  cream.rotation.y += 0.002;
-  frosting.rotation.y += 0.002;
+  if(flameAlive){
+    flame.scale.y = 1 + Math.sin(Date.now()*0.02)*0.3;
+    flameLight.intensity = 3 + Math.sin(Date.now()*0.03)*0.5;
+  }
 
-  flame.scale.y = 1 + Math.sin(Date.now() * 0.01) * 0.2;
-  flameLight.intensity = 2 + Math.sin(Date.now() * 0.02) * 0.5;
+  petals.forEach(p=>{
+    p.position.y -= 0.03;
+    p.rotation.x += 0.02;
+    p.rotation.z += 0.02;
+    if(p.position.y < 0){
+      p.position.y = Math.random()*10+5;
+    }
+  });
 
   controls.update();
-  renderer.render(scene, camera);
+  composer.render();
 }
 
 animate();
 
-/* Resize Fix */
+/* Resize */
 
-window.addEventListener("resize", () => {
-  camera.aspect = window.innerWidth/window.innerHeight;
+window.addEventListener("resize",()=>{
+  camera.aspect = innerWidth/innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(innerWidth,innerHeight);
+  composer.setSize(innerWidth,innerHeight);
 });
 
 </script>
