@@ -2,53 +2,154 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>For My Red Velvet Queen ❤️</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@300;400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<title>3D Red Velvet For You ❤️</title>
+<style>
+body {
+  margin: 0;
+  overflow: hidden;
+  background: radial-gradient(circle at center, #2b0000, #0c0000 80%);
+}
+canvas { display: block; }
+</style>
 </head>
 <body>
 
-<div class="background-glow"></div>
+<script type="module">
 
-<div class="container">
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160/build/three.module.js";
+import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.160/examples/jsm/controls/OrbitControls.js";
 
-    <h1 class="title">A Red Velvet Just For You ❤️</h1>
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x1a0000, 10, 40);
 
-    <div class="cake-scene" id="cakeScene">
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 100);
+camera.position.set(0, 4, 10);
 
-        <div class="candle">
-            <div class="flame" id="flame"></div>
-        </div>
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
 
-        <div class="cake">
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.enablePan = false;
+controls.minDistance = 6;
+controls.maxDistance = 15;
 
-            <div class="top-cream"></div>
+/* Lighting */
 
-            <div class="drips"></div>
+const ambient = new THREE.AmbientLight(0xffcccc, 0.4);
+scene.add(ambient);
 
-            <div class="layer velvet"></div>
-            <div class="cream-layer"></div>
-            <div class="layer velvet bottom"></div>
+const spotlight = new THREE.SpotLight(0xff8888, 2);
+spotlight.position.set(5, 10, 5);
+spotlight.castShadow = true;
+scene.add(spotlight);
 
-            <div class="plate"></div>
+/* Plate */
 
-        </div>
-    </div>
+const plateGeo = new THREE.CylinderGeometry(4.5, 4.5, 0.5, 64);
+const plateMat = new THREE.MeshStandardMaterial({
+  color: 0xeeeeee,
+  roughness: 0.3,
+  metalness: 0.2
+});
+const plate = new THREE.Mesh(plateGeo, plateMat);
+plate.receiveShadow = true;
+scene.add(plate);
 
-    <button class="button" id="startBtn">Touch The Cake 🎀</button>
+/* Cake Bottom */
 
-    <div class="letter" id="letter">
-        <p id="typed"></p>
-    </div>
+const cakeGeo1 = new THREE.CylinderGeometry(3, 3, 1.5, 64);
+const velvetMat = new THREE.MeshStandardMaterial({
+  color: 0x5c0000,
+  roughness: 0.8
+});
+const cake1 = new THREE.Mesh(cakeGeo1, velvetMat);
+cake1.position.y = 1;
+cake1.castShadow = true;
+scene.add(cake1);
 
-</div>
+/* Cream Layer */
 
-<audio id="music" loop>
-<source src="https://cdn.pixabay.com/audio/2022/10/25/audio_946b7bb6f1.mp3" type="audio/mpeg">
-</audio>
+const creamGeo = new THREE.CylinderGeometry(3.05, 3.05, 0.4, 64);
+const creamMat = new THREE.MeshStandardMaterial({
+  color: 0xfff0f5,
+  roughness: 0.3
+});
+const cream = new THREE.Mesh(creamGeo, creamMat);
+cream.position.y = 2;
+cream.castShadow = true;
+scene.add(cream);
 
-<script src="script.js"></script>
+/* Top Layer */
+
+const cakeGeo2 = new THREE.CylinderGeometry(2.8, 2.8, 1.2, 64);
+const cake2 = new THREE.Mesh(cakeGeo2, velvetMat);
+cake2.position.y = 3;
+cake2.castShadow = true;
+scene.add(cake2);
+
+/* Frosting Top */
+
+const frostingGeo = new THREE.CylinderGeometry(2.9, 2.9, 0.5, 64);
+const frosting = new THREE.Mesh(frostingGeo, creamMat);
+frosting.position.y = 3.9;
+frosting.castShadow = true;
+scene.add(frosting);
+
+/* Candle */
+
+const candleGeo = new THREE.CylinderGeometry(0.15, 0.15, 1.5, 32);
+const candleMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+const candle = new THREE.Mesh(candleGeo, candleMat);
+candle.position.y = 5;
+candle.castShadow = true;
+scene.add(candle);
+
+/* Flame */
+
+const flameGeo = new THREE.SphereGeometry(0.25, 32, 32);
+const flameMat = new THREE.MeshBasicMaterial({
+  color: 0xffaa00
+});
+const flame = new THREE.Mesh(flameGeo, flameMat);
+flame.position.y = 6;
+scene.add(flame);
+
+/* Glow Light from Flame */
+
+const flameLight = new THREE.PointLight(0xffaa33, 2, 5);
+flameLight.position.y = 6;
+scene.add(flameLight);
+
+/* Floating Animation */
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  cake1.rotation.y += 0.002;
+  cake2.rotation.y += 0.002;
+  cream.rotation.y += 0.002;
+  frosting.rotation.y += 0.002;
+
+  flame.scale.y = 1 + Math.sin(Date.now() * 0.01) * 0.2;
+  flameLight.intensity = 2 + Math.sin(Date.now() * 0.02) * 0.5;
+
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+animate();
+
+/* Resize Fix */
+
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+</script>
 </body>
 </html>
